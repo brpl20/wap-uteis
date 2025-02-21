@@ -1,15 +1,18 @@
 require("dotenv").config();
-const { initializeWhatsAppClient } = require(".whatsapp/client");
-const { connectDatabase } = require("./config/database");
+const { initializeWhatsAppClient } = require("./whatsapp/client");
+const { connectDatabase, loadBlockedEntities } = require("./config/database");
 const { initializeAPI } = require("./api/server");
 const { hardBlockUser, hardBlockGroup } = require("./uteis/hardBlock");
 const { archiveGroup, archiveChatSpam } = require("./uteis/softBlock");
+const botListener = require('./bot/botListener');  
 
 // Simple in-memory block tracking (alternative to MongoDB)
 const blockedEntities = {
   users: new Map(), // userId -> blockType
   groups: new Map(), // groupId -> blockType
 };
+
+
 
 async function waitForClientReady(client) {
   return new Promise((resolve) => {
@@ -32,6 +35,7 @@ async function startApplication() {
     // Initialize MongoDB connection
     console.log("Connecting to database...");
     await connectDatabase();
+    await loadBlockedEntities(blockedEntities);
     console.log("Database connected successfully");
 
     // Initialize WhatsApp client
@@ -62,6 +66,7 @@ async function startApplication() {
       try {
         const isGroup = message.from.endsWith("@g.us");
         const id = message.from;
+        console.log(id);
 
         // Check if sender is blocked
         const blockType = isGroup
@@ -71,9 +76,9 @@ async function startApplication() {
         if (blockType) {
           if (blockType === "soft") {
             if (isGroup) {
-              await archiveGroup(client, message, [id]);
+              await archiveGroup(client, message, blockedEntities.groups);
             } else {
-              await archiveChatSpam(client, message, [id]);
+              await archiveChatSpam(client, message, blockedEntities.users);
             }
           }
           return; // Skip processing blocked messages
@@ -82,7 +87,10 @@ async function startApplication() {
         console.error("Error processing message:", error);
       }
     });
-
+    // At the start of startApplication():
+    console.log("Initial blocked entities state:");
+    console.log("Blocked users:", [...blockedEntities.users.entries()]);
+    console.log("Blocked groups:", [...blockedEntities.groups.entries()]);
     console.log("Application started successfully");
 
     // Handle process termination

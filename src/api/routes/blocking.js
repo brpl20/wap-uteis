@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const UserSettings = require("../models/UserSettings");
-const GroupSettings = require("../models/GroupSettings");
-const { hardBlockUser, hardBlockGroup } = require("../uteis/hardBlock");
-const { archiveGroup, archiveChatSpam } = require("../uteis/softBlock");
+const UserSettings = require("../../models/UserSettings");
+const GroupSettings = require("../../models/GroupSettings");
+const { hardBlockUser, hardBlockGroup } = require("../../uteis/hardBlock");
+const { archiveGroup, archiveChatSpam } = require("../../uteis/softBlock");
 
 // Get blocked groups
 router.get("/blocked-groups", async (req, res) => {

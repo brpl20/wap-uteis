@@ -22,8 +22,11 @@ async function archiveGroup(client, message, groupsToArchive, debug = false) {
 // SoftBlock Person
 async function archiveChatSpam(client, message, spamToArchive, debug = false) {
   try {
+    console.log(client);
+    console.log(message);
+    console.log(spamToArchive);
     let contact = await message.getContact();
-    if (contact.isMyContact && spamToArchive.includes(message.from)) {
+    if (contact && spamToArchive.get(message.from) === 'soft') {
       let chat = await client.getChatById(message.from);
       await chat.archive();
       if (debug) {
@@ -32,6 +35,7 @@ async function archiveChatSpam(client, message, spamToArchive, debug = false) {
     }
   } catch (error) {
     console.error("Error archiving chat:", error);
+    console.error("Message from:", message.from);
   }
 }
 

@@ -1,5 +1,14 @@
 # Blocking API Manual
 
+npm install
+npm install --save-dev nodemon -> Para rodar sem precisar atualizar o código toda hora
+
+## Todo
+- Project tree: YAML;
+- Database Equema; 
+- HardBlock Fix; 
+- Instant recall from database after insertion;
+
 ## Block a User
 
 ### Hard Block User

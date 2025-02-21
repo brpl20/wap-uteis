@@ -1,48 +1,65 @@
 // src/bot/botListener.js
 const axios = require("axios");
 
-async function blockUser(type, userId) {
+async function blockEntity(type, id, isGroup) {
   try {
-    const response = await axios.post("http://localhost:3000/api/block", {
-      id: userId,
-      type: "user",
-      blockType: type,
+    const response = await axios.post('http://localhost:3000/api/block', {
+      id: id,
+      type: isGroup ? 'group' : 'user',
+      blockType: type
     });
     return response.data;
   } catch (error) {
-    console.error("Error making block request:", error);
+    console.error('Error making block request:', error);
     throw error;
   }
 }
 
 async function botListener(client, message) {
   try {
-    // Only process if it's a text message
     if (!message.body) return;
 
     const command = message.body.toLowerCase().trim();
+    
+    // Extract remote ID and check if it's a group
+    const remoteId = message._data.id.remote;
+    const isGroup = remoteId.endsWith('@g.us');
+    
+    // Get the participant ID if it's a group message
+    const participantId = isGroup ? message._data.id.participant : remoteId;
 
-    // Get the chat the message is replying to
-    const quoted = await message.getQuotedMessage();
-    if (!quoted) return;
-
-    // Get the sender ID of the quoted message
-    const targetUserId = quoted.from;
+    // Debug logging
+    console.log({
+      command,
+      remoteId,
+      isGroup,
+      participantId
+    });
 
     switch (command) {
-      case "sf":
-        await blockUser("soft", targetUserId);
-        await message.reply("✅ User has been soft blocked");
+      case "sb": // Soft block
+        if (isGroup) {
+          await blockEntity("soft", remoteId, true);
+          console.log(`✅ Group ${remoteId} has been soft blocked`);
+        } else {
+          await blockEntity("soft", participantId, false);
+          console.log(`✅ User ${participantId} has been soft blocked`);
+        }
         break;
 
-      case "hb":
-        await blockUser("hard", targetUserId);
-        await message.reply("🚫 User has been hard blocked");
+      case "hb": // Hard block
+        if (isGroup) {
+          await blockEntity("hard", remoteId, true);
+          console.log(`🚫 Group ${remoteId} has been hard blocked`);
+        } else {
+          await blockEntity("hard", participantId, false);
+          console.log(`🚫 User ${participantId} has been hard blocked`);
+        }
         break;
     }
   } catch (error) {
     console.error("Error in bot listener:", error);
-    message.reply("❌ Failed to process blocking command");
+    console.error(error.stack);
   }
 }
 
