@@ -5,9 +5,12 @@ npm install --save-dev nodemon -> Para rodar sem precisar atualizar o código to
 
 ## Todo
 - Project tree: YAML;
+- Porject tree + Cat
 - Database Equema; 
-- HardBlock Fix; 
+- HardBlock Fix -> Only block and never do nothing again; 
 - Instant recall from database after insertion;
+- Send Message API
+- Schedule Message
 
 ## Block a User
 
