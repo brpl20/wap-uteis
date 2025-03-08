@@ -1,7 +1,7 @@
 // src/models/GroupSettings.js
 const mongoose = require("mongoose");
 
-const groupSettingsSchema = new mongoose.Schema({
+const GroupSettingsSchema = new mongoose.Schema({
   groupId: {
     type: String,
     required: true,
@@ -22,4 +22,4 @@ const groupSettingsSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("GroupSettings", groupSettingsSchema);
+module.exports = mongoose.model("GroupSettings", GroupSettingsSchema);

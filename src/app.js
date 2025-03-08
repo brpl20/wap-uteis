@@ -1,7 +1,6 @@
 require("dotenv").config();
 const { initializeWhatsAppClient } = require("./whatsapp/client");
-const { connectDatabase, loadBlockedEntities } = require("./config/database");
-const { initializeAPI } = require("./api/server");
+const { connectDatabase, loadListenerGroup, loadBlockedEntities, ListenerGroupSettings } = require("./config/database");const { initializeAPI } = require("./api/server");
 const { hardBlockUser, hardBlockGroup } = require("./uteis/hardBlock");
 const { archiveGroup, archiveChatSpam } = require("./uteis/softBlock");
 const botListener = require('./bot/botListener');  
@@ -12,21 +11,64 @@ const blockedEntities = {
   groups: new Map(), // groupId -> blockType
 };
 
+let listenerGroupId = null;
 
 
 async function waitForClientReady(client) {
+  const listenerGroup = await loadListenerGroup();
+  listenerGroupId = listenerGroup ? listenerGroup.listenerGroupId : null;
+  
   return new Promise((resolve) => {
     if (client.info) {
-      resolve();
+      // Client is already ready
+      handleListenerGroup(client, listenerGroup).then(resolve);
     } else {
+      // Wait for client to be ready
       client.on("ready", () => {
         console.log("WhatsApp client authenticated");
         console.log("WhatsApp client is ready!");
-        resolve();
+        console.log("listenergroup:");
+        console.log(listenerGroup);
+        const listenerGroupId = listenerGroup ? listenerGroup.listenerGroupId : null;
+        console.log(listenerGroupId);
+        
+        handleListenerGroup(client, listenerGroup).then(resolve);
       });
     }
   });
 }
+
+async function handleListenerGroup(client, listenerGroup) {
+  if (listenerGroup === null) {
+    console.log("listenerGroupId is null - create new group and update mongodb");
+    try {
+      const createGroupResult = await client.createGroup(
+        "BotManager" // Group title
+      );
+      const groupId = createGroupResult.gid._serialized;
+      console.log("Group created with ID:", groupId);
+      
+      // save to mongo
+      const newListenerGroup = new ListenerGroupSettings({
+        listenerGroupId: groupId
+      });
+      
+      await newListenerGroup.save();
+      console.log("Group ID saved to MongoDB successfully");
+      
+      // Send welcome message to the new group
+      const chat = await client.getChatById(groupId);
+      await chat.sendMessage("Welcome to BotManager! This group will be used to manage bot operations.");
+      
+    } catch (error) {
+      console.error("Error creating WhatsApp group:", error);
+    }
+  } else {
+    console.log("Listener group already exists:", listenerGroup);
+    // Continue with existing group
+  }
+}
+
 
 async function startApplication() {
   try {
@@ -36,6 +78,8 @@ async function startApplication() {
     console.log("Connecting to database...");
     await connectDatabase();
     await loadBlockedEntities(blockedEntities);
+
+
     console.log("Database connected successfully");
 
     // Initialize WhatsApp client
@@ -52,14 +96,22 @@ async function startApplication() {
     console.log("API server started");
 
     // Create Message handler with blocking logic
-
+    // add id aqui! 
     client.on("message_create", async (message) => {
+      if (message.isGroupMsg) {
+        try {
+          await botListenerGroup(client, message, listenerGroupId);
+        } catch (error) {
+          console.error("Error processing command:", error);
+        }
+      } else {
       try {
         await botListener(client, message);
       } catch (error) {
         console.error("Error processing command:", error);
       }
-    });
+    }}
+  );
 
     // Message handler with blocking logic
     client.on("message", async (message) => {

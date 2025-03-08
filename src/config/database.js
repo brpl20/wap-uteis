@@ -2,6 +2,20 @@
 const mongoose = require('mongoose');
 const UserSettings = require('../models/UserSettings');
 const GroupSettings = require('../models/GroupSettings');
+const ListenerGroupSettings = require('../models/ListenerGroupSettings');
+
+async function loadListenerGroup() {
+  try {
+    const listenerGroup = await ListenerGroupSettings.findOne({});
+    
+    return listenerGroup; // Returns null if not found, or the document if found
+  } catch (error) {
+    console.error('Error loading listener group:', error);
+    throw error;
+  }
+}
+
+
 
 async function loadBlockedEntities(blockedEntities) {
   try {
@@ -56,5 +70,7 @@ async function connectDatabase() {
 
 module.exports = {
   connectDatabase,
+  loadListenerGroup,
+  ListenerGroupSettings,
   loadBlockedEntities
 };
