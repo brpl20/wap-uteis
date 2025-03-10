@@ -11,6 +11,8 @@ npm install --save-dev nodemon -> Para rodar sem precisar atualizar o código to
 - Instant recall from database after insertion;
 - Send Message API
 - Schedule Message
+- Fix ListGroups app -- getChats and them filter! 
+
 
 ## Block a User
 

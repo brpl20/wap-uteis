@@ -3,49 +3,65 @@ const axios = require("axios");
 
 async function botListenerGroup(client, message, listenerGroupId) {
   try {
-    if (!message.body || message.from !== listenerGroupId) return;
-    console.log("Bot Working");
-    // const command = message.body.toLowerCase().trim();
+    if (!message.body || message.to !== listenerGroupId) return;
     
-    // // Extract remote ID and check if it's a group
-    // const remoteId = message._data.id.remote;
-    // const isGroup = remoteId.endsWith('@g.us');
+    console.log("Bot listener active!");
+    const command = message.body.toLowerCase().trim();
     
-    // // Get the participant ID if it's a group message
-    // const participantId = isGroup ? message._data.id.participant : remoteId;
+    // Debug logging
+    console.log("From Group Bot Listener on message_create on:")
+    console.log({
+      command
+    });
 
-    // // Debug logging
-    // console.log({
-    //   command,
-    //   remoteId,
-    //   isGroup,
-    //   participantId
-    // });
-
-    // switch (command) {
-    //   case "sb": // Soft block
-    //     if (isGroup) {
-    //       await blockEntity("soft", remoteId, true);
-    //       console.log(`✅ Group ${remoteId} has been soft blocked`);
-    //     } else {
-    //       await blockEntity("soft", participantId, false);
-    //       console.log(`✅ User ${participantId} has been soft blocked`);
-    //     }
-    //     break;
-
-    //   case "hb": // Hard block
-    //     if (isGroup) {
-    //       await blockEntity("hard", remoteId, true);
-    //       console.log(`🚫 Group ${remoteId} has been hard blocked`);
-    //     } else {
-    //       await blockEntity("hard", participantId, false);
-    //       console.log(`🚫 User ${participantId} has been hard blocked`);
-    //     }
-    //     break;
-    // }
+    // Command handling
+    switch (command) {
+      case "!listgroups":
+        await handleListGroups(client, message);
+        break;
+        
+      case "!listinactive":
+        // await handleListIgnoredGroups(client, message);
+        console.log("TODO!");
+        break;
+        
+      // Add help command
+      case "!help":
+        await client.sendMessage(message.from, 
+          "Available commands:\n" +
+          "!listgroups - Lists all all groups\n" +
+          "!listinactive - Lists all inactive groups"
+        );
+        break;
+    }
   } catch (error) {
     console.error("Error in bot listener:", error);
     console.error(error.stack);
+  }
+}
+
+// Handler for listing groups
+async function handleListGroups(client, message) {
+  try {
+    // Get active groups from API
+    const response = await axios.get('http://localhost:3000/api/getActiveGroups');
+    const groups = response.data;
+    
+    if (!groups || groups.length === 0) {
+      await client.sendMessage(message.from, "No active groups found.");
+      return;
+    }
+    
+    // Format response
+    let responseText = "*Active Groups:*\n\n";
+    groups.forEach((group, index) => {
+      responseText += `${index + 1}. ${group.name || 'Unnamed Group'} (${group.id})\n`;
+    });
+    
+    await client.sendMessage(message.from, responseText);
+  } catch (error) {
+    console.error("Error fetching active groups:", error);
+    await client.sendMessage(message.from, "Error fetching active groups. Please try again later.");
   }
 }
 

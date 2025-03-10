@@ -4,6 +4,8 @@ const { connectDatabase, loadListenerGroup, loadBlockedEntities, ListenerGroupSe
 const { hardBlockUser, hardBlockGroup } = require("./uteis/hardBlock");
 const { archiveGroup, archiveChatSpam } = require("./uteis/softBlock");
 const botListener = require('./bot/botListener');  
+const botListenerGroup = require('./bot/botListenerGroup');  
+
 
 // Simple in-memory block tracking (alternative to MongoDB)
 const blockedEntities = {
@@ -98,8 +100,12 @@ async function startApplication() {
     // Create Message handler with blocking logic
     // add id aqui! 
     client.on("message_create", async (message) => {
-      if (message.isGroupMsg) {
+      const remoteId = message.id?.remote || message._data?.id?.remote;
+      const targetRemoteId = listenerGroupId;
+
+      if (remoteId === targetRemoteId) {
         try {
+          console.log("Bot Working?");
           await botListenerGroup(client, message, listenerGroupId);
         } catch (error) {
           console.error("Error processing command:", error);

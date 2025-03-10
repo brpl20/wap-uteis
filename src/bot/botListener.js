@@ -29,6 +29,7 @@ async function botListener(client, message) {
     const participantId = isGroup ? message._data.id.participant : remoteId;
 
     // Debug logging
+    console.log("From Single Bot Listener on message_create:")
     console.log({
       command,
       remoteId,

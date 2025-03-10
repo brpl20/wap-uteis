@@ -1,6 +1,7 @@
 const express = require("express");
 const net = require("net");
 const blocking = require("./routes/blocking");
+const listing = require("./routes/listing");
 
 async function findAvailablePort(startPort) {
   let port = startPort;
@@ -72,6 +73,7 @@ async function initializeAPI(client) {
 
   // Routes
   app.use("/api", blocking);
+  app.use("/api", listing);
 
   // Health check endpoint
   app.get("/health", (req, res) => {
