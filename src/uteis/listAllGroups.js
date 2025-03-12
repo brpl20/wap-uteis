@@ -1,31 +1,26 @@
 // src/uteis/listAllGroups.js
-const listAllGroupsOrdered = async () => {
-    try {
-      const groups = await Group.find().sort({ lastMessage: -1 });
-      console.log('All groups ordered by last message:', groups);
-      return groups;
-    } catch (error) {
-      console.error('Error fetching groups:', error);
-      throw error;
-    }
-  };
+const listAllGroupsOrdered = async (client) => {
+  try {
+    // Get all chats using getChats() method
+    const chats = await client.getChats();
+    
+    // Filter to only include groups
+    const groups = chats.filter(chat => chat.isGroup);
+    
+    // Sort groups by last message timestamp (descending)
+    const sortedGroups = groups.sort((a, b) => {
+      const timestampA = a.lastMessage ? a.lastMessage.timestamp : 0;
+      const timestampB = b.lastMessage ? b.lastMessage.timestamp : 0;
+      return timestampB - timestampA;
+    });
+    
+    console.log('All groups ordered by last message:', sortedGroups);
+    return sortedGroups;
+  } catch (error) {
+    console.error('Error fetching groups:', error);
+    throw error;
+  }
+};
 
-
-  app.get('/api/getActiveGroups', async (req, res) => {
-    try {
-      const activeGroups = await getActiveGroups(client);
-      res.json(activeGroups);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-  
-  // API endpoint to get all groups (active and inactive)
-  app.get('/api/getGroupChats', async (req, res) => {
-    try {
-      const groupChats = await getGroupChats(client);
-      res.json(groupChats);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+// Export the function
+module.exports = { listAllGroupsOrdered };
