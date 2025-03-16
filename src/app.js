@@ -4,7 +4,9 @@ const { connectDatabase, loadListenerGroup, loadBlockedEntities, ListenerGroupSe
 const { hardBlockUser, hardBlockGroup } = require("./uteis/hardBlock");
 const { archiveGroup, archiveChatSpam } = require("./uteis/softBlock");
 const botListener = require('./bot/botListener');  
-const botListenerGroup = require('./bot/botListenerGroup');  
+const botListenerGroup = require('./bot/botListenerGroup'); 
+const { scheduleAlbumSelection } = require('./services/cronService');
+
 
 
 // Simple in-memory block tracking (alternative to MongoDB)
@@ -33,7 +35,7 @@ async function waitForClientReady(client) {
         console.log(listenerGroup);
         const listenerGroupId = listenerGroup ? listenerGroup.listenerGroupId : null;
         console.log(listenerGroupId);
-        
+        scheduleAlbumSelection(client, listenerGroupId);
         handleListenerGroup(client, listenerGroup).then(resolve);
       });
     }
@@ -94,7 +96,7 @@ async function startApplication() {
 
     // Initialize API server
     console.log("Starting API server...");
-    initializeAPI(client, blockedEntities);
+    const { app, port: apiPort } = await initializeAPI(client, blockedEntities);
     console.log("API server started");
 
     // Create Message handler with blocking logic
@@ -102,22 +104,18 @@ async function startApplication() {
     client.on("message_create", async (message) => {
       const remoteId = message.id?.remote || message._data?.id?.remote;
       const targetRemoteId = listenerGroupId;
-
-      if (remoteId === targetRemoteId) {
-        try {
-          console.log("Bot Working?");
-          await botListenerGroup(client, message, listenerGroupId);
-        } catch (error) {
-          console.error("Error processing command:", error);
-        }
-      } else {
+    
       try {
-        await botListener(client, message);
+        if (remoteId === targetRemoteId) {
+          console.log("Bot Working in listener group");
+          await botListenerGroup(client, message, listenerGroupId, apiPort);
+        } else {
+          await botListener(client, message, apiPort);
+        }
       } catch (error) {
         console.error("Error processing command:", error);
       }
-    }}
-  );
+    });
 
     // Message handler with blocking logic
     client.on("message", async (message) => {
@@ -171,6 +169,9 @@ async function startApplication() {
 
 async function cleanup() {
   try {
+    if (typeof mongoose !== 'undefined') {
+      mongoose.disconnect().catch(console.error);
+    }
     console.log("Cleaning up...");
     await mongoose.connection.close();
     console.log("Cleanup completed");

@@ -1,9 +1,9 @@
 // src/bot/botListener.js
 const axios = require("axios");
 
-async function blockEntity(type, id, isGroup) {
+async function blockEntity(type, id, isGroup, port) {
   try {
-    const response = await axios.post('http://localhost:3000/api/block', {
+    const response = await axios.post(`http://localhost:${port}/api/block`, {
       id: id,
       type: isGroup ? 'group' : 'user',
       blockType: type
@@ -15,7 +15,7 @@ async function blockEntity(type, id, isGroup) {
   }
 }
 
-async function botListener(client, message) {
+async function botListener(client, message, apiPort) {
   try {
     if (!message.body) return;
 
@@ -40,20 +40,20 @@ async function botListener(client, message) {
     switch (command) {
       case "sb": // Soft block
         if (isGroup) {
-          await blockEntity("soft", remoteId, true);
+          await blockEntity("soft", remoteId, true, apiPort);
           console.log(`✅ Group ${remoteId} has been soft blocked`);
         } else {
-          await blockEntity("soft", participantId, false);
+          await blockEntity("soft", participantId, false, apiPort);
           console.log(`✅ User ${participantId} has been soft blocked`);
         }
         break;
 
       case "hb": // Hard block
         if (isGroup) {
-          await blockEntity("hard", remoteId, true);
+          await blockEntity("hard", remoteId, true, apiPort);
           console.log(`🚫 Group ${remoteId} has been hard blocked`);
         } else {
-          await blockEntity("hard", participantId, false);
+          await blockEntity("hard", participantId, false, apiPort);
           console.log(`🚫 User ${participantId} has been hard blocked`);
         }
         break;

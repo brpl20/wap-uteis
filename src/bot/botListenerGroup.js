@@ -1,7 +1,8 @@
-// src/bot/botListenerGroup.js
+// src/bot/botListenerGroup.js (updated)
 const axios = require("axios");
+const albumService = require('../services/albumService');
 
-async function botListenerGroup(client, message, listenerGroupId) {
+async function botListenerGroup(client, message, listenerGroupId, apiPort) {
   try {
     if (!message.body || message.to !== listenerGroupId) return;
     
@@ -11,18 +12,23 @@ async function botListenerGroup(client, message, listenerGroupId) {
     // Debug logging
     console.log("From Group Bot Listener on message_create on:")
     console.log({
-      command
+      command,
+      apiPort
     });
 
     // Command handling
     switch (command) {
       case "!listgroups":
-        await handleListGroups(client, message);
+        await handleListGroups(client, message, apiPort);
         break;
         
       case "!listinactive":
-        // await handleListIgnoredGroups(client, message);
+        // await handleListIgnoredGroups(client, message, apiPort);
         console.log("TODO!");
+        break;
+      
+      case "!next":
+        await handleNextAlbum(client, message);
         break;
         
       // Add help command
@@ -30,7 +36,8 @@ async function botListenerGroup(client, message, listenerGroupId) {
         await client.sendMessage(message.from, 
           "Available commands:\n" +
           "!listgroups - Lists all all groups\n" +
-          "!listinactive - Lists all inactive groups"
+          "!listinactive - Lists all inactive groups\n" +
+          "!next - Get another album recommendation"
         );
         break;
     }
@@ -40,29 +47,34 @@ async function botListenerGroup(client, message, listenerGroupId) {
   }
 }
 
-// Handler for listing groups
-async function handleListGroups(client, message) {
+// Handler for next album
+// Handler for next album in botListenerGroup.js
+async function handleNextAlbum(client, message) {
   try {
-    // Get active groups from API
-    const response = await axios.get('http://localhost:3000/api/getActiveGroups');
-    const groups = response.data;
+    const album = await albumService.getRandomAlbum();
     
-    if (!groups || groups.length === 0) {
-      await client.sendMessage(message.from, "No active groups found.");
+    if (!album) {
+      await client.sendMessage(message.from, "Sorry, couldn't find an album recommendation.");
       return;
     }
     
-    // Format response
-    let responseText = "*Active Groups:*\n\n";
-    groups.forEach((group, index) => {
-      responseText += `${index + 1}. ${group.name || 'Unnamed Group'} (${group.id})\n`;
-    });
+    const albumCount = await albumService.getAlbumCount();
+    const formattedMessage = 
+      `*Album Recommendation*\n\n` +
+      `🎵 *${album.album}*\n` +
+      `👤 ${album.artist}\n` +
+      `📅 ${album.year}\n\n` +
+      `${albumCount} albums remaining\n` +
+      `Type !next for another recommendation`;
     
-    await client.sendMessage(message.from, responseText);
+    await client.sendMessage(message.from, formattedMessage);
+    
   } catch (error) {
-    console.error("Error fetching active groups:", error);
-    await client.sendMessage(message.from, "Error fetching active groups. Please try again later.");
+    console.error("Error getting next album:", error);
+    await client.sendMessage(message.from, "Error getting album recommendation. Please try again later.");
   }
 }
+
+// Other handlers as before...
 
 module.exports = botListenerGroup;

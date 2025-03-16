@@ -1,4 +1,15 @@
 # Blocking API Manual
+on any group: sf / hb => soft block / hard block
+on any chat : sf / hb => soft block / hard block
+
+on special group:
+!listgroups
+!listinactive
+!next
+!help
+
+---
+
 
 npm install
 npm install --save-dev nodemon -> Para rodar sem precisar atualizar o código toda hora

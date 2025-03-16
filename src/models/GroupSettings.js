@@ -7,6 +7,10 @@ const GroupSettingsSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  description: {
+    type: String,
+    default: null,
+  },
   isBlocked: {
     type: Boolean,
     default: false,

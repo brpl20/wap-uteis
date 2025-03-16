@@ -48,9 +48,9 @@ async function loadBlockedEntities(blockedEntities) {
     });
 
     console.log("\nCurrently Blocked Groups:");
-    blockedEntities.groups.forEach((blockType, groupId) => {
-      console.log(`- ${groupId}: ${blockType}`);
-    });
+    for (const group of blockedGroups) {
+      console.log(`- ${group.groupId}: ${group.blockType} (${group.description || 'No description'})`);
+    }
 
   } catch (error) {
     console.error("Error loading blocked entities:", error);

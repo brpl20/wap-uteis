@@ -6,16 +6,13 @@ const listing = require("./routes/listing");
 async function findAvailablePort(startPort) {
   let port = startPort;
 
-  while (port < 65536) {
-    // Maximum port number
+  while (port < 65536) { // Maximum port number
     try {
-      await new Promise((resolve, reject) => {
-        const tester = net
-          .createServer()
+      const isAvailable = await new Promise((resolve, reject) => {
+        const tester = net.createServer()
           .once("error", (err) => {
             if (err.code === "EADDRINUSE") {
-              port++;
-              resolve(false);
+              resolve(false); // Port is in use
             } else {
               reject(err);
             }
@@ -25,7 +22,14 @@ async function findAvailablePort(startPort) {
           })
           .listen(port);
       });
-      return port;
+      
+      if (isAvailable) {
+        return port; // Found an available port
+      }
+      
+      // If not available, try the next port
+      port++;
+      
     } catch (err) {
       console.error(`Error testing port ${port}:`, err);
       port++;
@@ -37,6 +41,7 @@ async function findAvailablePort(startPort) {
 async function initializeAPI(client) {
   const app = express();
   const preferredPort = process.env.PORT || 3000;
+  let actualPort;
 
   // Middleware
   app.use(express.json());
@@ -82,6 +87,7 @@ async function initializeAPI(client) {
 
   try {
     const port = await findAvailablePort(preferredPort);
+    actualPort = port; // Set the actualPort variable
     app.listen(port, () => {
       console.log(`API server running on port ${port}`);
     });
@@ -90,7 +96,7 @@ async function initializeAPI(client) {
     throw error;
   }
 
-  return app;
+  return { app, port: actualPort };
 }
 
 module.exports = { initializeAPI };
