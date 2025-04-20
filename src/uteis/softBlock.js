@@ -3,7 +3,7 @@
 async function archiveGroup(client, message, groupsToArchive, debug = false) {
   if (
     message.from.endsWith("@g.us") &&
-    groupsToArchive.includes(message.from)
+    groupsToArchive.has(message.from)  // Changed from includes to has
   ) {
     if (debug) {
       console.log("Group Message =>", message);

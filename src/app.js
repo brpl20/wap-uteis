@@ -122,7 +122,6 @@ async function startApplication() {
       try {
         const isGroup = message.from.endsWith("@g.us");
         const id = message.from;
-        console.log(id);
 
         // Check if sender is blocked
         const blockType = isGroup

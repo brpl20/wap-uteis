@@ -19,7 +19,7 @@ async function hardBlockGroup(client, groupId) {
 // HardBlock Person
 async function hardBlockUser(client, userId) {
   try {
-    const chat = await client.getChatById(userId);
+    const chat = await client.getChat(userId);
     await chat.block();
 
     await UserSettings.findOneAndUpdate(

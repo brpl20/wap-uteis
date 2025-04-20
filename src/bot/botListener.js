@@ -14,7 +14,7 @@ async function blockEntity(type, id, isGroup, port) {
     throw error;
   }
 }
-
+// await botListener(client, message, apiPort);
 async function botListener(client, message, apiPort) {
   try {
     if (!message.body) return;
